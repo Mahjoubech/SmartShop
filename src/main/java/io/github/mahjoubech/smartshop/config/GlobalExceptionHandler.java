@@ -86,22 +86,32 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public ResponseEntity<?> handleValidationExceptions(
-//            MethodArgumentNotValidException ex, HttpServletRequest request) {
-//
-//        Map<String, String> errors = new HashMap<>();
-//        ex.getBindingResult().getFieldErrors().forEach(error ->
-//                errors.put(error.getField(), error.getDefaultMessage())
-//        );
-//        errors.put("status", String.valueOf( HttpStatus.BAD_REQUEST.value()));
-//        errors.put("error", errors.toString());
-//        errors.put("message", ex.getMessage());
-//        errors.put("path", request.getRequestURI());
-//
-//        return new ResponseEntity<>(errors,HttpStatus.BAD_REQUEST);
-//
-//    }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationExceptions(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+        errors.put("status", String.valueOf( HttpStatus.BAD_REQUEST.value()));
+        errors.put("error", errors.toString());
+        errors.put("message", ex.getMessage());
+        errors.put("path", request.getRequestURI());
+
+        return new ResponseEntity<>(errors,HttpStatus.BAD_REQUEST);
+
+    }
+    @ExceptionHandler(ConflictStateException.class)
+    public ResponseEntity<?> handleConflictStateException(
+            ConflictStateException ex, HttpServletRequest request) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("status", String.valueOf( HttpStatus.CONFLICT.value()));
+        errors.put("error", "CONFLICT");
+        errors.put("message", ex.getMessage());
+        errors.put("path", request.getRequestURI());
+        return new ResponseEntity<>(errors,HttpStatus.CONFLICT);
+    }
 //    @ExceptionHandler(ResourceNotFoundException.class)
 //    public ResponseEntity<?> handleNotFoundException(
 //            ResourceNotFoundException ex, HttpServletRequest request) {
