@@ -22,6 +22,6 @@ public abstract class User extends BaseEntity{
     private String password;
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    private Roles role;
+    private Roles role ;
 
 }
