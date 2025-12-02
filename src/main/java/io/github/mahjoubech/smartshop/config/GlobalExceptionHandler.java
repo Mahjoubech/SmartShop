@@ -112,6 +112,11 @@ public class GlobalExceptionHandler {
         errors.put("path", request.getRequestURI());
         return new ResponseEntity<>(errors,HttpStatus.CONFLICT);
     }
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<String> handleNotFound(NoHandlerFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Endpoint not found");
+    }
 //    @ExceptionHandler(ResourceNotFoundException.class)
 //    public ResponseEntity<?> handleNotFoundException(
 //            ResourceNotFoundException ex, HttpServletRequest request) {
