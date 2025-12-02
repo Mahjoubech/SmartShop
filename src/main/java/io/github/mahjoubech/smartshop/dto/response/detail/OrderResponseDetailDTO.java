@@ -25,12 +25,10 @@ public class OrderResponseDetailDTO {
     private BigDecimal remainingAmount;
     private String codePromo;
     private OrderStatus status;
-    private Client client;
+    private ClientResponseDetailDTO client;
     private List<OrderItemResponseDetailDTO> orderItems;
-
     @JsonFormat(pattern = "dd MMMM yyyy HH:mm", locale = "fr")
     private LocalDateTime createAt;
-
     @JsonFormat(pattern = "dd MMMM yyyy HH:mm", locale = "fr")
     private LocalDateTime modifyAt;
 }

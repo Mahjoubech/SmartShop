@@ -77,8 +77,8 @@ public class OrderServiceImpl implements OrderService {
         order.setTVA(subTotal.multiply(BigDecimal.valueOf(0.2)));
         order.setTotalTTC(order.getSubTotal().subtract(order.getDiscount()).add(order.getTVA()));
         order.setRemainingAmount(order.getTotalTTC());
-        orderRepository.save(order);
-        return null;
+
+        return orderMapper.toResponseDetail( orderRepository.save(order));
     }
 
 

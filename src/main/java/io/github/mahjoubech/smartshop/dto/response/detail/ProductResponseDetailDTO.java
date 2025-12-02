@@ -13,7 +13,6 @@ public class ProductResponseDetailDTO {
     private Integer quantity;
     @JsonFormat(pattern = "dd MMMM yyyy HH:mm", locale = "fr")
     private LocalDateTime createAt;
-
     @JsonFormat(pattern = "dd MMMM yyyy HH:mm", locale = "fr")
     private LocalDateTime modifyAt;
 }
