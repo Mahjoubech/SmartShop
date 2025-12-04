@@ -1,6 +1,8 @@
 package io.github.mahjoubech.smartshop.controller;
 
+import io.github.mahjoubech.smartshop.dto.request.ClientRequestDTO;
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
+import io.github.mahjoubech.smartshop.dto.response.detail.ClientResponseDetailDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
 import io.github.mahjoubech.smartshop.service.OrderService;
 import jakarta.validation.Valid;
