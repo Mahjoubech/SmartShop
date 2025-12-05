@@ -1,10 +1,15 @@
 package io.github.mahjoubech.smartshop.controller;
 
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
+import io.github.mahjoubech.smartshop.dto.response.basic.OrderResponseBasicAdminDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
 import io.github.mahjoubech.smartshop.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -30,6 +35,21 @@ public class GestionCammandesController {
     public ResponseEntity<?> deleteOrder(@PathVariable String id) {
         orderService.deleteOrder(id);
         return ResponseEntity.ok().body("Order deleted successfully");
+    }
+    @GetMapping("/admin/{id}")
+    public ResponseEntity<OrderResponseDetailDTO> getOrderById(@PathVariable String id) {
+        OrderResponseDetailDTO response = orderService.getOrderById(id);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/admin/all")
+    public ResponseEntity<Page<OrderResponseBasicAdminDTO>> getAllOrders(@RequestParam(defaultValue = "0") int page,
+                                                                         @RequestParam(defaultValue = "10") int size,
+                                                                         @RequestParam(defaultValue = "createAt") String sortBy,
+                                                                         @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page , size, sort);
+        Page<OrderResponseBasicAdminDTO> orderPage = orderService.getAllOrdersAdmin(pageable);
+        return ResponseEntity.ok().body(orderPage);
     }
 
 }

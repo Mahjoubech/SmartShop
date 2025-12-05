@@ -1,6 +1,7 @@
 package io.github.mahjoubech.smartshop.mapper;
 
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
+import io.github.mahjoubech.smartshop.dto.response.basic.OrderResponseBasicAdminDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import org.mapstruct.Mapper;
@@ -13,4 +14,5 @@ public interface OrderMapper {
     Order toEntity(OrderRequestDTO dto);
 
     OrderResponseDetailDTO toResponseDetail(Order entity);
+    OrderResponseBasicAdminDTO toResponseBasicAdmin(Order entity);
 }

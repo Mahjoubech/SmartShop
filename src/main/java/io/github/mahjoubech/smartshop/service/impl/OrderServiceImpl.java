@@ -2,6 +2,7 @@ package io.github.mahjoubech.smartshop.service.impl;
 
 import io.github.mahjoubech.smartshop.dto.request.OrderItemRequestDTO;
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
+import io.github.mahjoubech.smartshop.dto.response.basic.OrderResponseBasicAdminDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.OrderItemMapper;
@@ -10,7 +11,6 @@ import io.github.mahjoubech.smartshop.model.entity.Client;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.OrderItem;
 import io.github.mahjoubech.smartshop.model.entity.Product;
-import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.repository.ClientRepository;
 import io.github.mahjoubech.smartshop.repository.OrderItemRepository;
 import io.github.mahjoubech.smartshop.repository.OrderRepository;
@@ -19,12 +19,13 @@ import io.github.mahjoubech.smartshop.service.OrderService;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -92,13 +93,9 @@ public class OrderServiceImpl implements OrderService {
                         "Client not found with ID: " + orderRequestDTO.getClientId()));
 
         order.setClient(client);
-
-        // -------------------- DELETE OLD ITEMS --------------------
         orderItemRepository.deleteItemsByOrderId(orderId);
 
         order.getOrderItems().clear();
-
-        // -------------------- ADD NEW ITEMS -----------------------
         for (OrderItemRequestDTO itemRequestDTO : orderRequestDTO.getOrderItems()) {
 
             Product product = productRepository.findById(itemRequestDTO.getProductId())
@@ -116,8 +113,6 @@ public class OrderServiceImpl implements OrderService {
 
             order.getOrderItems().add(item);
         }
-
-        // recalculations
         BigDecimal subTotal = order.getOrderItems().stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -137,6 +132,20 @@ public class OrderServiceImpl implements OrderService {
             throw new ResourceNotFoundException("Order not found with ID: " + orderId);
         }
         orderRepository.delete(order.get());
+   }
+
+    @Override
+    @Transactional
+    public OrderResponseDetailDTO getOrderById(String orderId) {
+        return orderRepository.findById(orderId)
+                .map(orderMapper::toResponseDetail)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
+    }
+
+    @Override
+    @Transactional
+    public Page<OrderResponseBasicAdminDTO> getAllOrdersAdmin(Pageable pageable) {
+        return orderRepository.findAll(pageable).map(orderMapper::toResponseBasicAdmin);
    }
 
 
