@@ -12,4 +12,5 @@ public interface OrderService {
     void deleteOrder(String orderId);
     OrderResponseDetailDTO getOrderById(String orderId);
     Page<OrderResponseBasicAdminDTO> getAllOrdersAdmin(Pageable pageable);
+    OrderResponseDetailDTO confirmedOrder(String orderId);
 }

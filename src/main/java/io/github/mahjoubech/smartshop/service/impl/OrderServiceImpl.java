@@ -4,6 +4,7 @@ import io.github.mahjoubech.smartshop.dto.request.OrderItemRequestDTO;
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
 import io.github.mahjoubech.smartshop.dto.response.basic.OrderResponseBasicAdminDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
+import io.github.mahjoubech.smartshop.exception.InvalidCredentialsException;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.OrderItemMapper;
 import io.github.mahjoubech.smartshop.mapper.OrderMapper;
@@ -11,6 +12,7 @@ import io.github.mahjoubech.smartshop.model.entity.Client;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.OrderItem;
 import io.github.mahjoubech.smartshop.model.entity.Product;
+import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.repository.ClientRepository;
 import io.github.mahjoubech.smartshop.repository.OrderItemRepository;
 import io.github.mahjoubech.smartshop.repository.OrderRepository;
@@ -148,7 +150,20 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findAll(pageable).map(orderMapper::toResponseBasicAdmin);
    }
 
+    @Override
+    public OrderResponseDetailDTO confirmedOrder(String orderId) {
+        Optional<Order> order = orderRepository.findById(orderId);
+        if (order.isEmpty()) {
+            throw new ResourceNotFoundException("Order not found with ID: " + orderId);
+        }
+        if (order.get().getRemainingAmount().compareTo(BigDecimal.ZERO) == 0) {
+            order.get().setStatus(OrderStatus.CONFIRMED);
+            orderRepository.save(order.get());
+        } else {
+            throw new InvalidCredentialsException("Cannot confirm order with remaining amount greater than zero.");
+        }
+        return orderMapper.toResponseDetail(order.get());
 
-
+    }
 
 }
