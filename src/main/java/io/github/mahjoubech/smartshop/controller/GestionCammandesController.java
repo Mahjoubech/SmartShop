@@ -51,5 +51,11 @@ public class GestionCammandesController {
         Page<OrderResponseBasicAdminDTO> orderPage = orderService.getAllOrdersAdmin(pageable);
         return ResponseEntity.ok().body(orderPage);
     }
+    @PostMapping("/admin/{id}/confirm")
+    public ResponseEntity<OrderResponseDetailDTO> confirmOrder(@PathVariable String id) {
+        OrderResponseDetailDTO oo =  orderService.confirmedOrder(id);
+        return ResponseEntity.ok(oo);
+    }
+
 
 }
