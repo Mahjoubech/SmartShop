@@ -1,6 +1,7 @@
 package io.github.mahjoubech.smartshop.service.impl;
 
 import io.github.mahjoubech.smartshop.dto.request.PaymentRequestDTO;
+import io.github.mahjoubech.smartshop.dto.request.PaymentRequestStatusDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.PaymentResponseDetailDTO;
 import io.github.mahjoubech.smartshop.exception.InvalidCredentialsException;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
@@ -70,5 +71,18 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 
+    @Override
+    @Transactional
+    public Page<PaymentResponseDetailDTO> getAllPayments(Pageable pageable) {
+        return paymentRepository.findAll(pageable).map(paymentMapper::toResponse);
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponseDetailDTO getPaymentById(String id) {
+        return paymentRepository.findById(id)
+                .map(paymentMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
+    }
 
 }
