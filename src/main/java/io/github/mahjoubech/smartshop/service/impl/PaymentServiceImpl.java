@@ -8,6 +8,7 @@ import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.PaymentMapper;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.Payment;
+import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.model.enums.PayementType;
 import io.github.mahjoubech.smartshop.model.enums.PaymentStatus;
 import io.github.mahjoubech.smartshop.repository.OrderRepository;
@@ -99,6 +100,9 @@ public class PaymentServiceImpl implements PaymentService {
         Order order = payment.get().getOrder();
         if (status.getPaymentStatus() == PaymentStatus.REJECTED || status.getPaymentStatus() == PaymentStatus.CANCELED) {
             order.setRemainingAmount(order.getRemainingAmount().add(payment.get().getAmount()));
+            if(order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                order.setStatus(OrderStatus.CONFIRMED);
+            }
             orderRepository.save(order);
         }
         payment.get().setStatus(status.getPaymentStatus());
