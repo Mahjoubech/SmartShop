@@ -85,4 +85,27 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
     }
 
+    @Override
+    @Transactional
+    public PaymentResponseDetailDTO updateStatus(String id, PaymentRequestStatusDTO status) {
+        Optional<Payment> payment = paymentRepository.findById(id);
+        if (payment.isEmpty()) {
+            throw new ResourceNotFoundException("Payment not found with id: " + id);
+        }
+
+        if (payment.get().getStatus() == PaymentStatus.CLEARED || payment.get().getStatus() == PaymentStatus.CANCELED) {
+            throw new InvalidCredentialsException("Cannot update status of a cleared payment");
+        }
+        Order order = payment.get().getOrder();
+        if (status.getPaymentStatus() == PaymentStatus.REJECTED || status.getPaymentStatus() == PaymentStatus.CANCELED) {
+            order.setRemainingAmount(order.getRemainingAmount().add(payment.get().getAmount()));
+            orderRepository.save(order);
+        }
+        payment.get().setStatus(status.getPaymentStatus());
+        if (status.getPaymentStatus() == PaymentStatus.CLEARED) {
+            payment.get().setDateDeposit(LocalDate.now());
+        }
+        return paymentMapper.toResponse(paymentRepository.save(payment.get()));
+    }
+
 }

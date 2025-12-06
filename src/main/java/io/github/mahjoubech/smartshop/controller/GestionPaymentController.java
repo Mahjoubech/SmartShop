@@ -30,7 +30,14 @@ public class GestionPaymentController {
         PaymentResponseDetailDTO response = paymentService.createPayment(paymentRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
+    @PutMapping("/admin/update/{id}/status")
+    public ResponseEntity<PaymentResponseDetailDTO> updatePaymentStatus(@PathVariable String id, @Valid @RequestBody PaymentRequestStatusDTO status) {
+        if(!EnumSet.allOf(PaymentStatus.class).contains(status.getPaymentStatus())) {
+            throw new InvalidCredentialsException("Invalid payment status: " + status.getPaymentStatus());
+        }
+        PaymentResponseDetailDTO response = paymentService.updateStatus(id,status);
+        return ResponseEntity.ok(response);
+    }
     @GetMapping("/admin/{id}")
     public ResponseEntity<PaymentResponseDetailDTO> getPaymentById(@PathVariable String id) {
         PaymentResponseDetailDTO response = paymentService.getPaymentById(id);

@@ -10,4 +10,5 @@ public interface PaymentService {
     PaymentResponseDetailDTO createPayment(PaymentRequestDTO paymentRequestDTO);
     Page<PaymentResponseDetailDTO> getAllPayments(Pageable pageable);
     PaymentResponseDetailDTO getPaymentById(String id);
+    PaymentResponseDetailDTO updateStatus(String id, PaymentRequestStatusDTO status);
 }
