@@ -6,12 +6,15 @@ import io.github.mahjoubech.smartshop.dto.response.detail.PaymentResponseDetailD
 import io.github.mahjoubech.smartshop.exception.InvalidCredentialsException;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.PaymentMapper;
+import io.github.mahjoubech.smartshop.model.entity.Client;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.Payment;
 import io.github.mahjoubech.smartshop.model.entity.Product;
+import io.github.mahjoubech.smartshop.model.enums.CustomerTierStatus;
 import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.model.enums.PayementType;
 import io.github.mahjoubech.smartshop.model.enums.PaymentStatus;
+import io.github.mahjoubech.smartshop.repository.ClientRepository;
 import io.github.mahjoubech.smartshop.repository.OrderRepository;
 import io.github.mahjoubech.smartshop.repository.PaymentRepository;
 import io.github.mahjoubech.smartshop.repository.ProductRepository;
@@ -32,8 +35,11 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
+    private final ClientRepository clientRepository;
     private final PaymentMapper paymentMapper;
-    public Integer getNextPaymentNumber(String orderId) {
+
+    @Transactional
+    public synchronized  Integer getNextPaymentNumber(String orderId) {
         Integer last = paymentRepository.findLastNumberByOrder(orderId);
         return (last == null) ? 1 : last + 1;
     }
@@ -51,7 +57,28 @@ public class PaymentServiceImpl implements PaymentService {
             p.setQuantity(p.getQuantity() - item.getQuantity());
             productRepository.save(p);
         });
+        Client client = order.getClient();
+        long totalOrders = client.getOrders().stream()
+                .filter(o -> o.getStatus() == OrderStatus.CONFIRMED)
+                .count();
+        System.out.println("Total confirmed orders for client " + client.getNomComplet() + ": " + totalOrders);
 
+        BigDecimal totatSpent = client.getOrders().stream()
+                .filter(o -> o.getStatus() == OrderStatus.CONFIRMED)
+                .map(Order::getTotalTTC)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(order.getTotalTTC());
+        if(totalOrders >= 20 || totatSpent.compareTo(new BigDecimal("15000")) >= 0) {
+            client.setCustomerTier(CustomerTierStatus.PLATINUM);
+        } else if(totalOrders >= 10 || totatSpent.compareTo(new BigDecimal("5000")) >= 0) {
+            client.setCustomerTier(CustomerTierStatus.GOLD);
+        } else if(totalOrders >= 2 || totatSpent.compareTo(new BigDecimal("500")) >= 0) {
+            client.setCustomerTier(CustomerTierStatus.SILVER);
+        } else {
+            client.setCustomerTier(CustomerTierStatus.BASIC);
+        }
+
+        clientRepository.save(client);
 
     }
 

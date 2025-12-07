@@ -20,7 +20,7 @@ import java.time.LocalDate;
 @SuperBuilder
 public class Payment extends BaseEntity {
 
-    @Column(name = "numero_payment", nullable = false, unique = true)
+    @Column(name = "numero_payment", nullable = false)
     private Integer numeroPayment;
 
     @Column(name = "amount", nullable = false)
