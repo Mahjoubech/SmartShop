@@ -1,6 +1,7 @@
 package io.github.mahjoubech.smartshop.controller;
 
 import io.github.mahjoubech.smartshop.dto.request.ClientRequestDTO;
+import io.github.mahjoubech.smartshop.dto.response.basic.ClientOrderStatsResponseBasicDTO;
 import io.github.mahjoubech.smartshop.dto.response.basic.ClientResponseBasicDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.ClientResponseDetailDTO;
 import io.github.mahjoubech.smartshop.service.ClientService;
@@ -56,5 +57,10 @@ public class ManageCleintController {
     public ResponseEntity<?> deleteClient(@PathVariable String id) {
         clientService.deleteClient(id);
         return ResponseEntity.ok().body("Client deleted successfully");
+    }
+    @GetMapping("/stats")
+    public ClientOrderStatsResponseBasicDTO getClientOrderStats(HttpSession session) {
+        String id = (String) session.getAttribute("USER_ID");
+        return clientService.getClientOrderStats(id);
     }
 }
