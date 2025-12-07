@@ -34,6 +34,12 @@ public class PaymentServiceImpl implements PaymentService {
         Integer last = paymentRepository.findLastNumberByOrder(orderId);
         return (last == null) ? 1 : last + 1;
     }
+    private void autoConfirmOrderIfFullyPaid(Order order) {
+        if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) == 0) {
+            order.setStatus(OrderStatus.CONFIRMED);
+        }
+    }
+
 
     @Override
     @Transactional
@@ -68,6 +74,7 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new InvalidCredentialsException("Invalid payment type");
         }
         order.get().setRemainingAmount(order.get().getRemainingAmount().subtract(amount));
+        autoConfirmOrderIfFullyPaid(order.get());
         orderRepository.save(order.get());
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
@@ -100,9 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
         Order order = payment.get().getOrder();
         if (status.getPaymentStatus() == PaymentStatus.REJECTED || status.getPaymentStatus() == PaymentStatus.CANCELED) {
             order.setRemainingAmount(order.getRemainingAmount().add(payment.get().getAmount()));
-            if(order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
-                order.setStatus(OrderStatus.CONFIRMED);
-            }
+            autoConfirmOrderIfFullyPaid(order);
             orderRepository.save(order);
         }
         payment.get().setStatus(status.getPaymentStatus());
