@@ -62,7 +62,13 @@ public class OrderServiceImpl implements OrderService {
             if (product.isEmpty()) {
                 throw new ResourceNotFoundException("Product not found with ID: " + itemRequestDTO.getProductId());
             }
-  OrderItem item = OrderItem.builder()
+            if (product.get().getQuantity() < itemRequestDTO.getQuantity()) {
+                throw new InvalidCredentialsException(
+                        "Stock insuffisant pour le produit: " + product.get().getProductName()
+                );
+            }
+
+            OrderItem item = OrderItem.builder()
           .order(order)
           .product(product.get())
           .quantity(itemRequestDTO.getQuantity())
@@ -103,7 +109,11 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepository.findById(itemRequestDTO.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Product not found with ID: " + itemRequestDTO.getProductId()));
-
+            if (product.getQuantity() < itemRequestDTO.getQuantity()) {
+                throw new InvalidCredentialsException(
+                        "Stock insuffisant pour le produit: " + product.getProductName()
+                );
+            }
             OrderItem item = OrderItem.builder()
                     .order(order)
                     .product(product)

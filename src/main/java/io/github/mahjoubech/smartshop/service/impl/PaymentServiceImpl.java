@@ -8,11 +8,13 @@ import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.PaymentMapper;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.Payment;
+import io.github.mahjoubech.smartshop.model.entity.Product;
 import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.model.enums.PayementType;
 import io.github.mahjoubech.smartshop.model.enums.PaymentStatus;
 import io.github.mahjoubech.smartshop.repository.OrderRepository;
 import io.github.mahjoubech.smartshop.repository.PaymentRepository;
+import io.github.mahjoubech.smartshop.repository.ProductRepository;
 import io.github.mahjoubech.smartshop.service.PaymentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ import java.util.Optional;
 public class PaymentServiceImpl implements PaymentService {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final ProductRepository productRepository;
     private final PaymentMapper paymentMapper;
     public Integer getNextPaymentNumber(String orderId) {
         Integer last = paymentRepository.findLastNumberByOrder(orderId);
@@ -39,7 +42,18 @@ public class PaymentServiceImpl implements PaymentService {
             order.setStatus(OrderStatus.CONFIRMED);
         }
     }
+    public void applyOrderBusinessRules(Order order) {
+        if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+            return;
+        }
+        order.getOrderItems().forEach(item -> {
+            Product p = item.getProduct();
+            p.setQuantity(p.getQuantity() - item.getQuantity());
+            productRepository.save(p);
+        });
 
+
+    }
 
     @Override
     @Transactional
@@ -76,6 +90,7 @@ public class PaymentServiceImpl implements PaymentService {
         order.get().setRemainingAmount(order.get().getRemainingAmount().subtract(amount));
         autoConfirmOrderIfFullyPaid(order.get());
         orderRepository.save(order.get());
+        applyOrderBusinessRules(order.get());
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 
@@ -109,6 +124,7 @@ public class PaymentServiceImpl implements PaymentService {
             order.setRemainingAmount(order.getRemainingAmount().add(payment.get().getAmount()));
             autoConfirmOrderIfFullyPaid(order);
             orderRepository.save(order);
+            applyOrderBusinessRules(order);
         }
         payment.get().setStatus(status.getPaymentStatus());
         if (status.getPaymentStatus() == PaymentStatus.CLEARED) {
