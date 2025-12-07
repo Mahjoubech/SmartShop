@@ -1,13 +1,17 @@
 package io.github.mahjoubech.smartshop.service.impl;
 
 import io.github.mahjoubech.smartshop.dto.request.ClientRequestDTO;
+import io.github.mahjoubech.smartshop.dto.response.basic.ClientOrderStatsResponseBasicDTO;
 import io.github.mahjoubech.smartshop.dto.response.basic.ClientResponseBasicDTO;
+import io.github.mahjoubech.smartshop.dto.response.basic.OrderHistoryBasicDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.ClientResponseDetailDTO;
 import io.github.mahjoubech.smartshop.exception.ConflictStateException;
 import io.github.mahjoubech.smartshop.exception.InvalidCredentialsException;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.ClientMapper;
 import io.github.mahjoubech.smartshop.model.entity.Client;
+import io.github.mahjoubech.smartshop.model.entity.Order;
+import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.repository.ClientRepository;
 import io.github.mahjoubech.smartshop.repository.UserRepository;
 import io.github.mahjoubech.smartshop.service.ClientService;
@@ -17,6 +21,12 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,5 +98,40 @@ public class ClientServiceImpl implements ClientService {
         Client existingClient = clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + id));
             clientRepository.delete(existingClient);
+    }
+    @Override
+    @Transactional
+    public ClientOrderStatsResponseBasicDTO getClientOrderStats(String clientId) {
+        Optional<Client> optionalClient = clientRepository.findById(clientId);
+        if (optionalClient.isEmpty()) {
+            throw new ResourceNotFoundException("Client not found with id: " + clientId);
+        }
+        List<Order> clientOrders = optionalClient.get().getOrders();
+        ClientOrderStatsResponseBasicDTO stats = new ClientOrderStatsResponseBasicDTO();
+        stats.setTotalOrders(clientOrders.size());
+        stats.setTotalSpentConfirmed(clientOrders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.CONFIRMED)
+                .map(Order::getTotalTTC)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        clientOrders.stream().min(Comparator.comparing(Order::getDate))
+                .ifPresent(o -> stats.setFirstOrderDate(o.getDate()));
+
+        clientOrders.stream().max(Comparator.comparing(Order::getDate))
+                .ifPresent(o -> stats.setLastOrderDate(o.getDate()));
+
+        List<OrderHistoryBasicDTO> history = clientOrders.stream()
+                .map(o -> {
+                    OrderHistoryBasicDTO dto = new OrderHistoryBasicDTO();
+                    dto.setOrderId(o.getId());
+                    dto.setDate(o.getDate());
+                    dto.setTotalTTC(o.getTotalTTC());
+                    dto.setStatus(o.getStatus());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        stats.setOrders(history);
+
+        return stats;
     }
 }
