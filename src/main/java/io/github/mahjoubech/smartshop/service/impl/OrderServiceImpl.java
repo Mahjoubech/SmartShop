@@ -12,6 +12,7 @@ import io.github.mahjoubech.smartshop.model.entity.Client;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.OrderItem;
 import io.github.mahjoubech.smartshop.model.entity.Product;
+import io.github.mahjoubech.smartshop.model.enums.CustomerTierStatus;
 import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.repository.ClientRepository;
 import io.github.mahjoubech.smartshop.repository.OrderItemRepository;
@@ -82,8 +83,17 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subTotal = orderItemList.stream()
                         .map(OrderItem::getLineTotal)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal discount = BigDecimal.ZERO;
+        if(client.get().getCustomerTier().equals(CustomerTierStatus.SILVER)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.05));
+        } else if (client.get().getCustomerTier().equals(CustomerTierStatus.GOLD)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.1));
+        } else if (client.get().getCustomerTier().equals(CustomerTierStatus.PLATINUM)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.15));
+        }
+        order.setDiscount(discount);
         order.setSubTotal(subTotal);
-        order.setTVA(subTotal.multiply(BigDecimal.valueOf(0.2)));
+        order.setTVA(subTotal.subtract(discount).multiply(BigDecimal.valueOf(0.2)));
         order.setTotalTTC(order.getSubTotal().subtract(order.getDiscount()).add(order.getTVA()));
         order.setRemainingAmount(order.getTotalTTC());
 

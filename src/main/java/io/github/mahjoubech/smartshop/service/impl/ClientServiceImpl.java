@@ -106,7 +106,7 @@ public class ClientServiceImpl implements ClientService {
         if (optionalClient.isEmpty()) {
             throw new ResourceNotFoundException("Client not found with id: " + clientId);
         }
-        List<Order> clientOrders = optionalClient.get().getOrders();
+        List<Order> clientOrders = optionalClient.get().getOrders().stream().filter(o -> o.getStatus().equals(OrderStatus.CONFIRMED)).toList();
         ClientOrderStatsResponseBasicDTO stats = new ClientOrderStatsResponseBasicDTO();
         stats.setTotalOrders(clientOrders.size());
         stats.setTotalSpentConfirmed(clientOrders.stream()
