@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -23,4 +24,7 @@ public class Product extends BaseEntity{
     private BigDecimal unitPrice;
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
+    @Builder.Default
+    @Column(name="deleted", nullable = false)
+    private Boolean deleted = false;
 }

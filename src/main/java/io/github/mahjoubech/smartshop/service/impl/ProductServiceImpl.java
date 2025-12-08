@@ -60,12 +60,19 @@ public class ProductServiceImpl implements ProductService {
         if (productOptional.isEmpty()) {
             throw new ResourceNotFoundException("Product not found with ID: " + productId);
         }
-        productRepository.deleteById(productId);
+        productOptional.get().setDeleted(true);
+        productRepository.save(productOptional.get());
     }
 
     @Override
     public Page<ProductResponseBasicDTO> getAllProducts(Pageable pageable) {
         return  productRepository.findAll(pageable)
                 .map(productMapper::toResponseBasic);
+    }
+    @Override
+    @Transactional
+    public Page<ProductResponseDetailDTO> getAllActiveProducts(Pageable pageable) {
+        return  productRepository.findAllActiveProducts(pageable)
+                .map(productMapper::toResponseDetail);
     }
 }

@@ -4,6 +4,7 @@ import io.github.mahjoubech.smartshop.dto.request.OrderItemRequestDTO;
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
 import io.github.mahjoubech.smartshop.dto.response.basic.OrderResponseBasicAdminDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
+import io.github.mahjoubech.smartshop.exception.ConflictStateException;
 import io.github.mahjoubech.smartshop.exception.InvalidCredentialsException;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.OrderItemMapper;
@@ -12,6 +13,7 @@ import io.github.mahjoubech.smartshop.model.entity.Client;
 import io.github.mahjoubech.smartshop.model.entity.Order;
 import io.github.mahjoubech.smartshop.model.entity.OrderItem;
 import io.github.mahjoubech.smartshop.model.entity.Product;
+import io.github.mahjoubech.smartshop.model.enums.CustomerTierStatus;
 import io.github.mahjoubech.smartshop.model.enums.OrderStatus;
 import io.github.mahjoubech.smartshop.repository.ClientRepository;
 import io.github.mahjoubech.smartshop.repository.OrderItemRepository;
@@ -58,14 +60,12 @@ public class OrderServiceImpl implements OrderService {
        List<OrderItem> orderItemList = new ArrayList<>();
         for (OrderItemRequestDTO itemRequestDTO : orderRequestDTO.getOrderItems()) {
 
-            Optional<Product> product = productRepository.findById(itemRequestDTO.getProductId());
+            Optional<Product> product = productRepository.findByIdAndDeletedFalse(itemRequestDTO.getProductId());
             if (product.isEmpty()) {
                 throw new ResourceNotFoundException("Product not found with ID: " + itemRequestDTO.getProductId());
             }
             if (product.get().getQuantity() < itemRequestDTO.getQuantity()) {
-                throw new InvalidCredentialsException(
-                        "Stock insuffisant pour le produit: " + product.get().getProductName()
-                );
+                order.setStatus(OrderStatus.REJECTED);
             }
 
             OrderItem item = OrderItem.builder()
@@ -82,8 +82,25 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subTotal = orderItemList.stream()
                         .map(OrderItem::getLineTotal)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal discount = BigDecimal.ZERO;
+        if(client.get().getCustomerTier().equals(CustomerTierStatus.SILVER)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.05));
+        } else if (client.get().getCustomerTier().equals(CustomerTierStatus.GOLD)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.1));
+        } else if (client.get().getCustomerTier().equals(CustomerTierStatus.PLATINUM)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.15));
+        }
+        if(orderRequestDTO.getCodePromo() != null){
+            boolean exists = orderRepository.existsByCodePromo(orderRequestDTO.getCodePromo());
+            if (exists) {
+                throw new ConflictStateException("Promo code already used in another order .");
+            }
+            discount = discount.add(subTotal.multiply(BigDecimal.valueOf(0.05)));
+        }
+        order.setDiscount(discount);
+        order.setCodePromo(orderRequestDTO.getCodePromo());
         order.setSubTotal(subTotal);
-        order.setTVA(subTotal.multiply(BigDecimal.valueOf(0.2)));
+        order.setTVA(subTotal.subtract(discount).multiply(BigDecimal.valueOf(0.2)));
         order.setTotalTTC(order.getSubTotal().subtract(order.getDiscount()).add(order.getTVA()));
         order.setRemainingAmount(order.getTotalTTC());
 
@@ -99,19 +116,18 @@ public class OrderServiceImpl implements OrderService {
         Client client = clientRepository.findById(orderRequestDTO.getClientId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Client not found with ID: " + orderRequestDTO.getClientId()));
-
         order.setClient(client);
         orderItemRepository.deleteItemsByOrderId(orderId);
 
         order.getOrderItems().clear();
         for (OrderItemRequestDTO itemRequestDTO : orderRequestDTO.getOrderItems()) {
 
-            Product product = productRepository.findById(itemRequestDTO.getProductId())
+            Product product = productRepository.findByIdAndDeletedFalse(itemRequestDTO.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Product not found with ID: " + itemRequestDTO.getProductId()));
             if (product.getQuantity() < itemRequestDTO.getQuantity()) {
                 throw new InvalidCredentialsException(
-                        "Stock insuffisant pour le produit: " + product.getProductName()
+                        "Insufficient stock for the product: " + product.getProductName()
                 );
             }
             OrderItem item = OrderItem.builder()
@@ -128,7 +144,23 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subTotal = order.getOrderItems().stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        BigDecimal discount = BigDecimal.ZERO;
+        if(client.getCustomerTier().equals(CustomerTierStatus.SILVER)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.05));
+        } else if (client.getCustomerTier().equals(CustomerTierStatus.GOLD)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.1));
+        } else if (client.getCustomerTier().equals(CustomerTierStatus.PLATINUM)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.15));
+        }
+        if(orderRequestDTO.getCodePromo() != null){
+            boolean exists = orderRepository.existsByCodePromo(orderRequestDTO.getCodePromo());
+            if (exists) {
+                throw new ConflictStateException("Promo code already used in another order.");
+            }
+            discount = discount.add(subTotal.multiply(BigDecimal.valueOf(0.05)));
+        }
+        order.setDiscount(discount);
+        order.setCodePromo(orderRequestDTO.getCodePromo());
         order.setSubTotal(subTotal);
         order.setTVA(subTotal.multiply(BigDecimal.valueOf(0.20)));
         order.setTotalTTC(order.getSubTotal().add(order.getTVA()));

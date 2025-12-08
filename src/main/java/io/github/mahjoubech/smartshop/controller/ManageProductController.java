@@ -65,4 +65,14 @@ public class ManageProductController {
         productService.deleteProduct(productId);
         return ResponseEntity.ok().body("Product deleted successfully");
     }
+    @GetMapping("admin/activeProducts")
+    public ResponseEntity<Page<ProductResponseDetailDTO>> getAllActiveProducts(@RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "10") int size,
+                                                                             @RequestParam(defaultValue = "createAt") String sortBy,
+                                                                             @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<ProductResponseDetailDTO> productResponses = productService.getAllActiveProducts(pageable);
+        return ResponseEntity.ok().body(productResponses);
+    }
 }

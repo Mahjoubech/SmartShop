@@ -10,6 +10,7 @@ public class ProductResponseDetailDTO {
     private String id;
     private String productName;
     private BigDecimal unitPrice;
+    private boolean deleted;
     private Integer quantity;
     @JsonFormat(pattern = "dd MMMM yyyy HH:mm", locale = "fr")
     private LocalDateTime createAt;

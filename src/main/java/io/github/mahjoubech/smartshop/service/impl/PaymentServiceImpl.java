@@ -64,15 +64,15 @@ public class PaymentServiceImpl implements PaymentService {
         System.out.println("Total confirmed orders for client " + client.getNomComplet() + ": " + totalOrders);
 
         BigDecimal totatSpent = client.getOrders().stream()
-                .filter(o -> o.getStatus() == OrderStatus.CONFIRMED)
+                .filter(o-> o.getStatus().equals(OrderStatus.CONFIRMED))
                 .map(Order::getTotalTTC)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .add(order.getTotalTTC());
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         if(totalOrders >= 20 || totatSpent.compareTo(new BigDecimal("15000")) >= 0) {
             client.setCustomerTier(CustomerTierStatus.PLATINUM);
         } else if(totalOrders >= 10 || totatSpent.compareTo(new BigDecimal("5000")) >= 0) {
             client.setCustomerTier(CustomerTierStatus.GOLD);
-        } else if(totalOrders >= 2 || totatSpent.compareTo(new BigDecimal("500")) >= 0) {
+        } else if(totalOrders >= 3 || totatSpent.compareTo(new BigDecimal("1000")) >= 0) {
             client.setCustomerTier(CustomerTierStatus.SILVER);
         } else {
             client.setCustomerTier(CustomerTierStatus.BASIC);
@@ -91,10 +91,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
         BigDecimal amount = paymentRequestDTO.getAmount();
         if(amount.compareTo(order.get().getRemainingAmount()) > 0) {
-            throw new InvalidCredentialsException("Montant dépasse le restant dû");
+            throw new InvalidCredentialsException("Amount exceeds the remaining balance.");
         }
         if(paymentRequestDTO.getType() == PayementType.ESPECES && amount.compareTo(new BigDecimal("20000")) > 0) {
-            throw new InvalidCredentialsException("Montant en espèces dépasse 20.000 DH");
+            throw new InvalidCredentialsException("Cash amount exceeds 20,000 DH.");
         }
         Payment payment = new Payment();
         payment.setOrder(order.get());
