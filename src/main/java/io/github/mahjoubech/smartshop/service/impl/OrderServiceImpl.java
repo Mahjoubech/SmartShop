@@ -58,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
        List<OrderItem> orderItemList = new ArrayList<>();
         for (OrderItemRequestDTO itemRequestDTO : orderRequestDTO.getOrderItems()) {
 
-            Optional<Product> product = productRepository.findById(itemRequestDTO.getProductId());
+            Optional<Product> product = productRepository.findByIdAndDeletedFalse(itemRequestDTO.getProductId());
             if (product.isEmpty()) {
                 throw new ResourceNotFoundException("Product not found with ID: " + itemRequestDTO.getProductId());
             }
@@ -106,7 +106,7 @@ public class OrderServiceImpl implements OrderService {
         order.getOrderItems().clear();
         for (OrderItemRequestDTO itemRequestDTO : orderRequestDTO.getOrderItems()) {
 
-            Product product = productRepository.findById(itemRequestDTO.getProductId())
+            Product product = productRepository.findByIdAndDeletedFalse(itemRequestDTO.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Product not found with ID: " + itemRequestDTO.getProductId()));
             if (product.getQuantity() < itemRequestDTO.getQuantity()) {
