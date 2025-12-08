@@ -64,9 +64,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new ResourceNotFoundException("Product not found with ID: " + itemRequestDTO.getProductId());
             }
             if (product.get().getQuantity() < itemRequestDTO.getQuantity()) {
-                throw new InvalidCredentialsException(
-                        "Stock insuffisant pour le produit: " + product.get().getProductName()
-                );
+                order.setStatus(OrderStatus.REJECTED);
             }
 
             OrderItem item = OrderItem.builder()
