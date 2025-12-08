@@ -91,10 +91,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
         BigDecimal amount = paymentRequestDTO.getAmount();
         if(amount.compareTo(order.get().getRemainingAmount()) > 0) {
-            throw new InvalidCredentialsException("Montant dépasse le restant dû");
+            throw new InvalidCredentialsException("Amount exceeds the remaining balance.");
         }
         if(paymentRequestDTO.getType() == PayementType.ESPECES && amount.compareTo(new BigDecimal("20000")) > 0) {
-            throw new InvalidCredentialsException("Montant en espèces dépasse 20.000 DH");
+            throw new InvalidCredentialsException("Cash amount exceeds 20,000 DH.");
         }
         Payment payment = new Payment();
         payment.setOrder(order.get());

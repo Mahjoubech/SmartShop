@@ -20,7 +20,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute(USER_ID_KEY) == null) {
             throw new AuthorizationException(
-                    "Session expirée ou utilisateur non authentifié. Veuillez vous connecter."
+                    "Session expired or user not authenticated. Please log in."
             );
         }
 
@@ -30,10 +30,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         if ("CLIENT".equals(role)) {
             if (path.startsWith("/api/products/admin") ||
                     path.startsWith("/api/orders/admin") ||
-                    path.startsWith("/api/client/admin"))
+                    path.startsWith("/api/client/admin") ||
+                    path.startsWith("/api/payments/admin"))
             {
                 throw new AuthorizationException(
-                        "Accès refusé. Cette opération est réservée aux administrateurs."
+                        "Access denied. This operation is restricted to administrators."
                 );
             }
 

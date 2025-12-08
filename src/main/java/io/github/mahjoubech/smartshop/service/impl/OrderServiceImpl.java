@@ -4,6 +4,7 @@ import io.github.mahjoubech.smartshop.dto.request.OrderItemRequestDTO;
 import io.github.mahjoubech.smartshop.dto.request.OrderRequestDTO;
 import io.github.mahjoubech.smartshop.dto.response.basic.OrderResponseBasicAdminDTO;
 import io.github.mahjoubech.smartshop.dto.response.detail.OrderResponseDetailDTO;
+import io.github.mahjoubech.smartshop.exception.ConflictStateException;
 import io.github.mahjoubech.smartshop.exception.InvalidCredentialsException;
 import io.github.mahjoubech.smartshop.exception.ResourceNotFoundException;
 import io.github.mahjoubech.smartshop.mapper.OrderItemMapper;
@@ -89,7 +90,15 @@ public class OrderServiceImpl implements OrderService {
         } else if (client.get().getCustomerTier().equals(CustomerTierStatus.PLATINUM)) {
             discount = subTotal.multiply(BigDecimal.valueOf(0.15));
         }
+        if(orderRequestDTO.getCodePromo() != null){
+            boolean exists = orderRepository.existsByCodePromo(orderRequestDTO.getCodePromo());
+            if (exists) {
+                throw new ConflictStateException("Promo code already used in another order .");
+            }
+            discount = discount.add(subTotal.multiply(BigDecimal.valueOf(0.05)));
+        }
         order.setDiscount(discount);
+        order.setCodePromo(orderRequestDTO.getCodePromo());
         order.setSubTotal(subTotal);
         order.setTVA(subTotal.subtract(discount).multiply(BigDecimal.valueOf(0.2)));
         order.setTotalTTC(order.getSubTotal().subtract(order.getDiscount()).add(order.getTVA()));
@@ -107,7 +116,6 @@ public class OrderServiceImpl implements OrderService {
         Client client = clientRepository.findById(orderRequestDTO.getClientId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Client not found with ID: " + orderRequestDTO.getClientId()));
-
         order.setClient(client);
         orderItemRepository.deleteItemsByOrderId(orderId);
 
@@ -119,7 +127,7 @@ public class OrderServiceImpl implements OrderService {
                             "Product not found with ID: " + itemRequestDTO.getProductId()));
             if (product.getQuantity() < itemRequestDTO.getQuantity()) {
                 throw new InvalidCredentialsException(
-                        "Stock insuffisant pour le produit: " + product.getProductName()
+                        "Insufficient stock for the product: " + product.getProductName()
                 );
             }
             OrderItem item = OrderItem.builder()
@@ -136,7 +144,23 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subTotal = order.getOrderItems().stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        BigDecimal discount = BigDecimal.ZERO;
+        if(client.getCustomerTier().equals(CustomerTierStatus.SILVER)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.05));
+        } else if (client.getCustomerTier().equals(CustomerTierStatus.GOLD)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.1));
+        } else if (client.getCustomerTier().equals(CustomerTierStatus.PLATINUM)) {
+            discount = subTotal.multiply(BigDecimal.valueOf(0.15));
+        }
+        if(orderRequestDTO.getCodePromo() != null){
+            boolean exists = orderRepository.existsByCodePromo(orderRequestDTO.getCodePromo());
+            if (exists) {
+                throw new ConflictStateException("Promo code already used in another order.");
+            }
+            discount = discount.add(subTotal.multiply(BigDecimal.valueOf(0.05)));
+        }
+        order.setDiscount(discount);
+        order.setCodePromo(orderRequestDTO.getCodePromo());
         order.setSubTotal(subTotal);
         order.setTVA(subTotal.multiply(BigDecimal.valueOf(0.20)));
         order.setTotalTTC(order.getSubTotal().add(order.getTVA()));
