@@ -61,5 +61,23 @@ Product  product;
     verify(productRepository).save(product);
     verify(productMapper).toResponseDetail(saveProduct);
 }
+@Test
+    void getAllProductsDetail_shouldReturnPage() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        Product product = new Product();
+        ProductResponseDetailDTO dto = new ProductResponseDetailDTO();
 
+        Page<Product> productPage = new PageImpl<>(List.of(product));
+
+        when(productRepository.findAll(pageable)).thenReturn(productPage);
+        when(productMapper.toResponseDetail(product)).thenReturn(dto);
+
+        // Act
+        Page<ProductResponseDetailDTO> result = productServiceImpl.getAllProductsDetail(pageable);
+
+        // Assert
+        assertEquals(1, result.getTotalElements());
+        verify(productRepository).findAll(pageable);
+    }
 }
