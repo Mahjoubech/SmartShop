@@ -80,4 +80,39 @@ Product  product;
         assertEquals(1, result.getTotalElements());
         verify(productRepository).findAll(pageable);
     }
+@Test
+    void updateProduct_shouldUpdateAndReturnDTO() {
+    // Arrange
+    String productId = "123";
+    ProductRequestDTO req = new ProductRequestDTO();
+    req.setProductName("Updated");
+    req.setUnitPrice(BigDecimal.TEN);
+    req.setQuantity(5);
+
+    Product product = new Product();
+    Product updated = new Product();
+    ProductResponseDetailDTO response = new ProductResponseDetailDTO();
+
+    when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+    when(productRepository.save(product)).thenReturn(updated);
+    when(productMapper.toResponseDetail(updated)).thenReturn(response);
+
+    // Act
+    ProductResponseDetailDTO result = productServiceImpl.updateProduct(productId, req);
+
+    // Assert
+    assertNotNull(result);
+    verify(productRepository).save(product);
+}
+@Test
+    void updateProduct_shouldThrowException_WhenIdNotFound() {
+        // Arrange
+        String id = "notExist";
+        ProductRequestDTO req = new ProductRequestDTO();
+
+        when(productRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Assert & Act
+        assertThrows(ResourceNotFoundException.class, () -> productServiceImpl.updateProduct(id, req));
+    }
 }
