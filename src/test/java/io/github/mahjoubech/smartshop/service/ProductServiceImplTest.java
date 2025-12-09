@@ -140,4 +140,29 @@ Product  product;
         // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> productServiceImpl.getProductById(id));
     }
+@Test
+    void deleteProduct_shouldMarkDeletedTrue() {
+        // Arrange
+        String id = "10";
+        Product product = new Product();
+        product.setDeleted(false);
+
+        when(productRepository.findById(id)).thenReturn(Optional.of(product));
+
+        // Act
+        productServiceImpl.deleteProduct(id);
+
+        // Assert
+        assertTrue(product.getDeleted());
+        verify(productRepository).save(product);
+    }
+ @Test
+    void deleteProduct_shouldThrowException_WhenNotFound() {
+        // Arrange
+        String id = "notFound";
+        when(productRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> productServiceImpl.deleteProduct(id));
+    }
 }
