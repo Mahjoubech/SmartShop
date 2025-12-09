@@ -39,7 +39,7 @@ public class Order extends  BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private OrderStatus status = OrderStatus.PANDING;
+    private OrderStatus status = OrderStatus.PENDING;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
