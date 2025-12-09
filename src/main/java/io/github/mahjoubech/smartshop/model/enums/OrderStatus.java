@@ -1,7 +1,7 @@
 package io.github.mahjoubech.smartshop.model.enums;
 
 public enum OrderStatus {
-    PANDING,
+    PENDING,
     CONFIRMED,
     CANCELLED,
     REJECTED
