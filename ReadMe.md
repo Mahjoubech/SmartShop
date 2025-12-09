@@ -1,17 +1,3 @@
-Parfait 😄 ! On peut maintenant générer un **README.md** pour ton projet **SmartShop** en utilisant ta structure de projet et toutes les informations que tu viens de donner. On va inclure :
-
-* Contexte détaillé et objectifs du projet
-* Architecture backend REST (Controller → Service → Repository → DTO → Mapper → Entity)
-* Fonctionnalités principales : Clients, Produits, Commandes, Paiements, Niveau de fidélité
-* Règles métiers critiques et validations
-* Structure du projet basée sur ton arborescence actuelle
-* Tests (JUnit/Mockito/Postman/Swagger)
-* Placeholders pour images (diagrammes UML, Postman, Jira, JaCoCo) avec cadre coloré et icônes
-* Modalité pédagogique et critères de réussite
-
-Voici un exemple de **README.md** prêt à copier et adapter :
-
-````markdown
 # 🛒 SmartShop – Backend REST API pour MicroTech Maroc
 
 ### Gestion commerciale et financière des clients B2B (650 clients actifs) via API REST.
