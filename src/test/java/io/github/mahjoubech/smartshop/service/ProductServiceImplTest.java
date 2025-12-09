@@ -165,4 +165,40 @@ Product  product;
         // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> productServiceImpl.deleteProduct(id));
     }
+@Test
+    void getAllProducts_shouldReturnBasicDTOPage() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 5);
+        Product p = new Product();
+        ProductResponseBasicDTO dto = new ProductResponseBasicDTO();
+
+        Page<Product> page = new PageImpl<>(java.util.List.of(p));
+
+        when(productRepository.findAll(pageable)).thenReturn(page);
+        when(productMapper.toResponseBasic(p)).thenReturn(dto);
+
+        // Act
+        Page<ProductResponseBasicDTO> result = productServiceImpl.getAllProducts(pageable);
+
+        // Assert
+        assertEquals(1, result.getTotalElements());
+    }
+ @Test
+    void getAllActiveProducts_shouldReturnActiveProductsPage() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 5);
+        Product p = new Product();
+        ProductResponseDetailDTO dto = new ProductResponseDetailDTO();
+
+        Page<Product> page = new PageImpl<>(java.util.List.of(p));
+
+        when(productRepository.findAllActiveProducts(pageable)).thenReturn(page);
+        when(productMapper.toResponseDetail(p)).thenReturn(dto);
+
+        // Act
+        Page<ProductResponseDetailDTO> result = productServiceImpl.getAllActiveProducts(pageable);
+
+        // Assert
+        assertEquals(1, result.getTotalElements());
+    }
 }
