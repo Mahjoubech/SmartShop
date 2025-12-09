@@ -115,4 +115,29 @@ Product  product;
         // Assert & Act
         assertThrows(ResourceNotFoundException.class, () -> productServiceImpl.updateProduct(id, req));
     }
+@Test
+    void getProductById_shouldReturnProductDetailDTO() {
+        // Arrange
+        String id = "101";
+        Product product = new Product();
+        ProductResponseDetailDTO response = new ProductResponseDetailDTO();
+
+        when(productRepository.findById(id)).thenReturn(Optional.of(product));
+        when(productMapper.toResponseDetail(product)).thenReturn(response);
+
+        // Act
+        ProductResponseDetailDTO result = productServiceImpl.getProductById(id);
+
+        // Assert
+        assertNotNull(result);
+    }
+@Test
+    void getProductById_shouldThrowException_WhenNotFound() {
+        // Arrange
+        String id = "400";
+        when(productRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> productServiceImpl.getProductById(id));
+    }
 }
